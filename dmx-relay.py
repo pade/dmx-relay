@@ -71,7 +71,8 @@ class DmxRelay:
   def NewData(self, data):
     command = int(data[self.dmxChannel-1])
     if (command != self._dmxValue):
-      self.logger.info(f'Channel n°{self.dmxChannel} receives value {command}')
+      self._dmxValue = command
+      self.logger.info(f'Channel n°{self.dmxChannel} receives value {self._dmxValue}')
 
 
   def Usage(self):
