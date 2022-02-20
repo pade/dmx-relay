@@ -17,44 +17,66 @@
 import getopt
 import textwrap
 import sys
+import configparser
+import logging
+import logging.handlers
+from pathlib import Path
 from ola.ClientWrapper import ClientWrapper
 
 __author__ = 'pdassier@free.fr (Patrick Dassier)'
 
+class DmxRelay:
 
-def NewData(data):
-  print(data)
+  CONFIG_FILE = '.dmx_relay.conf'
+
+  def __init__(self, argv):
+    self.logger = logging.getLogger('dmxrelay')
+    self.logger.setLevel(logging.INFO)
+    formatter = logging.Formatter(
+      '%(asctime)s - %(filename)s [%(levelname)s] %(message)s'
+    )
+    streamhandler = logging.StreamHandler(sys.stdout)
+    streamhandler.setFormatter(formatter)
+    self.logger.addHandler(streamhandler)
 
 
-def Usage():
-  print(textwrap.dedent("""
-  Usage: dmx-relay.py --universe <universe>
-
-  -h, --help                Display this help message and exit.
-  -u, --universe <universe> Universe number."""))
-
-
-def main():
-  try:
-      opts, args = getopt.getopt(sys.argv[1:], "hu:", ["help", "universe="])
-  except getopt.GetoptError as err:
-    print(str(err))
-    Usage()
-    sys.exit(2)
-
-  universe = 1
-  for o, a in opts:
-    if o in ("-h", "--help"):
+    try:
+        opts, args = getopt.getopt(argv, "hu:", ['help', 'universe='])
+    except getopt.GetoptError as err:
+      print(str(err))
       Usage()
-      sys.exit()
-    elif o in ("-u", "--universe"):
-      universe = int(a)
+      sys.exit(2)
 
-  wrapper = ClientWrapper()
-  client = wrapper.Client()
-  client.RegisterUniverse(universe, client.REGISTER, NewData)
-  wrapper.Run()
+    universe = 1
+    for o, a in opts:
+      if o in ("-h", "--help"):
+        Usage()
+        sys.exit()
+      elif o in ("-u", "--universe"):
+        universe = int(a)
+        self.logger.info(f'Using ARnet universe n°{universe}')
 
+    configFile = Path.joinpath(Path.home(), self.CONFIG_FILE)
+    config = configparser.ConfigParser()
+    config.read_file(open(configFile, 'r'))
+    self.dmxChannel = config['DEFAULT']['channel']
+    self.logger.info('Listning on DMX channel n°' + self.dmxChannel)
+
+    wrapper = ClientWrapper()
+    client = wrapper.Client()
+    client.RegisterUniverse(universe, client.REGISTER, NewData)
+    wrapper.Run()
+
+  def NewData(data):
+    print(data)
+
+
+  def Usage():
+    print(textwrap.dedent("""
+    Usage: dmx-relay.py --universe <universe>
+
+    -h, --help                Display this help message and exit.
+    -u, --universe <universe> Universe number."""))
 
 if __name__ == "__main__":
-  main()
+  app = DmxRelay(sys.argv[1:])
