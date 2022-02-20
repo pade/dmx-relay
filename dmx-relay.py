@@ -67,11 +67,11 @@ class DmxRelay:
     client.RegisterUniverse(universe, client.REGISTER, self.NewData)
     wrapper.Run()
 
-  def NewData(data):
+  def NewData(self,data):
     print(data)
 
 
-  def Usage():
+  def Usage(self):
     print(textwrap.dedent("""
     Usage: dmx-relay.py --universe <universe>
 
