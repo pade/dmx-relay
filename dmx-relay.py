@@ -44,13 +44,13 @@ class DmxRelay:
         opts, args = getopt.getopt(argv, "hu:", ['help', 'universe='])
     except getopt.GetoptError as err:
       print(str(err))
-      Usage()
+      self.Usage()
       sys.exit(2)
 
     universe = 1
     for o, a in opts:
       if o in ("-h", "--help"):
-        Usage()
+        self.Usage()
         sys.exit()
       elif o in ("-u", "--universe"):
         universe = int(a)
@@ -64,7 +64,7 @@ class DmxRelay:
 
     wrapper = ClientWrapper()
     client = wrapper.Client()
-    client.RegisterUniverse(universe, client.REGISTER, NewData)
+    client.RegisterUniverse(universe, client.REGISTER, self.NewData)
     wrapper.Run()
 
   def NewData(data):
