@@ -21,6 +21,7 @@ import configparser
 import logging
 import logging.handlers
 from pathlib import Path
+import RPi.GPIO as GPIO
 
 __author__ = 'pdassier@free.fr (Patrick Dassier)'
 
@@ -39,7 +40,6 @@ class DmxRelay:
     streamhandler.setFormatter(formatter)
     self.logger.addHandler(streamhandler)
     self._dmxValue = 0
-
 
     try:
         opts, args = getopt.getopt(argv, "hu:", ['help', 'universe='])
@@ -62,6 +62,10 @@ class DmxRelay:
     config.read_file(open(configFile, 'r'))
     self.dmxChannel = int(config['DEFAULT']['channel'])
     self.logger.info(f'Listning on DMX channel n°{self.dmxChannel}')
+    self._pin = int(config['DEFAULT']['pin'])
+    self.logger.info(f'Actuator is plugged on pin n°{self._pin}')
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(self._pin, GPIO.OUT, initial=GPIO.LOW)
 
     wrapper = ClientWrapper()
     client = wrapper.Client()
@@ -73,6 +77,12 @@ class DmxRelay:
     if (command != self._dmxValue):
       self._dmxValue = command
       self.logger.info(f'Channel n°{self.dmxChannel} receives value {self._dmxValue}')
+      if (self._dmxValue > 128):
+        self.logger.info('Open the door...')
+        GPIO.output(self._pin, GPIO.HIGH)
+      else:
+        self.logger.info('Stop action')
+        GPIO.output(self._pin, GPIO.LOW)
 
 
   def Usage(self):
