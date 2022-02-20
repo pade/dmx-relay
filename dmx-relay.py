@@ -59,16 +59,17 @@ class DmxRelay:
     configFile = Path.joinpath(Path.home(), self.CONFIG_FILE)
     config = configparser.ConfigParser()
     config.read_file(open(configFile, 'r'))
-    self.dmxChannel = config['DEFAULT']['channel']
-    self.logger.info('Listning on DMX channel n°' + self.dmxChannel)
+    self.dmxChannel = int(config['DEFAULT']['channel'])
+    self.logger.info(f'Listning on DMX channel n°{self.dmxChannel}')
 
     wrapper = ClientWrapper()
     client = wrapper.Client()
     client.RegisterUniverse(universe, client.REGISTER, self.NewData)
     wrapper.Run()
 
-  def NewData(self,data):
-    print(data)
+  def NewData(self, data):
+    command = data[self.dmxChannel]
+    self.logger.info(f'Channel n°{self.dmxChannel} receives value {command}')
 
 
   def Usage(self):
