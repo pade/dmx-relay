@@ -21,7 +21,6 @@ import configparser
 import logging
 import logging.handlers
 from pathlib import Path
-from ola.ClientWrapper import ClientWrapper
 
 __author__ = 'pdassier@free.fr (Patrick Dassier)'
 
@@ -30,6 +29,7 @@ class DmxRelay:
   CONFIG_FILE = '.dmx_relay.conf'
 
   def __init__(self, argv):
+    from ola.ClientWrapper import ClientWrapper
     self.logger = logging.getLogger('dmxrelay')
     self.logger.setLevel(logging.INFO)
     formatter = logging.Formatter(
@@ -79,4 +79,5 @@ class DmxRelay:
     -u, --universe <universe> Universe number."""))
 
 if __name__ == "__main__":
+  sys.path.insert(0, '/usr/local/lib/python3.9/site-packages')
   app = DmxRelay(sys.argv[1:])
