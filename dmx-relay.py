@@ -64,8 +64,8 @@ class DmxRelay:
     self.logger.info(f'Listning on DMX channel n°{self.dmxChannel}')
     self._pin = int(config['DEFAULT']['pin'])
     self.logger.info(f'Actuator is plugged on pin n°{self._pin}')
-    GPIO.setmode(GPIO.BOARD)
-    GPIO.setup(self._pin, GPIO.OUT, initial=GPIO.LOW)
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(self._pin, GPIO.OUT, initial=GPIO.HIGH)
 
     wrapper = ClientWrapper()
     client = wrapper.Client()
@@ -79,10 +79,10 @@ class DmxRelay:
       self.logger.info(f'Channel n°{self.dmxChannel} receives value {self._dmxValue}')
       if (self._dmxValue > 128):
         self.logger.info('Open the door...')
-        GPIO.output(self._pin, GPIO.HIGH)
+        GPIO.output(self._pin, GPIO.LOW)
       else:
         self.logger.info('Stop action')
-        GPIO.output(self._pin, GPIO.LOW)
+        GPIO.output(self._pin, GPIO.HIGH)
 
 
   def Usage(self):

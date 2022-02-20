@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 configparser = "*"
 protobuf = "*"
+"rpi.gpio" = "*"
 
 [dev-packages]
 
