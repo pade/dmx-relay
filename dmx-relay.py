@@ -38,6 +38,7 @@ class DmxRelay:
     streamhandler = logging.StreamHandler(sys.stdout)
     streamhandler.setFormatter(formatter)
     self.logger.addHandler(streamhandler)
+    self._dmxValue = 0
 
 
     try:
@@ -68,8 +69,9 @@ class DmxRelay:
     wrapper.Run()
 
   def NewData(self, data):
-    command = data[self.dmxChannel]
-    self.logger.info(f'Channel n°{self.dmxChannel} receives value {command}')
+    command = int(data[self.dmxChannel-1])
+    if (command != self._dmxValue):
+      self.logger.info(f'Channel n°{self.dmxChannel} receives value {command}')
 
 
   def Usage(self):
