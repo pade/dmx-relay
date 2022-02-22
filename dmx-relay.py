@@ -39,6 +39,9 @@ class DmxRelay:
     streamhandler = logging.StreamHandler(sys.stdout)
     streamhandler.setFormatter(formatter)
     self.logger.addHandler(streamhandler)
+    sysloghandler = logging.handlers.SysLogHandler()
+    sysloghandler.setFormatter(formatter)
+    self.logger.addHandler(sysloghandler)
     self._dmxValue = 0
 
     try:

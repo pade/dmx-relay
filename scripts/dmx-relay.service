@@ -1,0 +1,22 @@
+[Unit]
+Description=DMX relay
+After=network-online.target
+ 
+[Service]
+Type=simple
+ 
+User=pi
+Group=pi
+UMask=007
+WorkingDirectory=/home/pi/dmx-relay
+
+# Wait 30s to let wifi connexion starts
+ExecStartPre=/bin/sleep 30
+ExecStart=pipenv run python ./dmx-relay.py
+Restart=on-failure
+ 
+# Configures the time to wait before service is stopped forcefully.
+TimeoutStopSec=10
+ 
+[Install]
+WantedBy=multi-user.target
