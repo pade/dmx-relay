@@ -21,6 +21,7 @@ import configparser
 import logging
 import logging.handlers
 from pathlib import Path
+import subprocess
 import RPi.GPIO as GPIO
 
 __author__ = 'pdassier@free.fr (Patrick Dassier)'
@@ -42,7 +43,8 @@ class DmxRelay:
     sysloghandler = logging.handlers.SysLogHandler()
     sysloghandler.setFormatter(formatter)
     self.logger.addHandler(sysloghandler)
-    self._dmxValue = 0
+    self._cmdValue = 0
+
 
     try:
         opts, args = getopt.getopt(argv, "hu:", ['help', 'universe='])
@@ -63,12 +65,20 @@ class DmxRelay:
     configFile = Path.joinpath(Path.home(), self.CONFIG_FILE)
     config = configparser.ConfigParser()
     config.read_file(open(configFile, 'r'))
-    self.dmxChannel = int(config['DEFAULT']['channel'])
-    self.logger.info(f'Listning on DMX channel n°{self.dmxChannel}')
-    self._pin = int(config['DEFAULT']['pin'])
-    self.logger.info(f'Actuator is plugged on pin n°{self._pin}')
+    self.cmdChannel = int(config['DEFAULT']['channel'])
+    self.shutdownChannel = int(config['DEFAULT']['shutdownChannel'])
+    self._cmdPin = int(config['DEFAULT']['pin'])
+    self._shutdownPin = int(config['DEFAULT']['shutdown'])
+
+    self.logger.info(f'Listning on DMX channel n°{self.cmdChannel}')
+    self.logger.info(f'Shutdown channel n°{self.shutdownChannel}')
+    self.logger.info(f'Actuator is plugged on pin n°{self._cmdPin}')
+    self.logger.info(f'Shutdown button is plugged on pin n°{self._shutdownPin}')
+
+
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(self._pin, GPIO.OUT, initial=GPIO.HIGH)
+    GPIO.setup(self._cmdPin, GPIO.OUT, initial=GPIO.HIGH)
+    GPIO.setup(self._shutdownPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
     wrapper = ClientWrapper()
     client = wrapper.Client()
@@ -76,17 +86,20 @@ class DmxRelay:
     wrapper.Run()
 
   def NewData(self, data):
-    command = int(data[self.dmxChannel-1])
-    if (command != self._dmxValue):
-      self._dmxValue = command
-      self.logger.info(f'Channel n°{self.dmxChannel} receives value {self._dmxValue}')
-      if (self._dmxValue > 128):
+    command = int(data[self.cmdChannel-1])
+    shutdown = int(data[self.shutdownChannel-1])
+    if (command != self._cmdValue):
+      self._cmdValue = command
+      self.logger.info(f'Channel n°{self.cmdChannel} receives value {self._cmdValue}')
+      if (self._cmdValue > 128):
         self.logger.info('Open the door...')
-        GPIO.output(self._pin, GPIO.LOW)
+        GPIO.output(self._cmdPin, GPIO.LOW)
       else:
         self.logger.info('Stop action')
-        GPIO.output(self._pin, GPIO.HIGH)
-
+        GPIO.output(self._cmdPin, GPIO.HIGH)
+    if (shutdown > 128):
+      self.logger.info('Ask for shutdown')
+      subprocess.call(['sudo', 'shutdown', '-h', 'now'], shell=False)
 
   def Usage(self):
     print(textwrap.dedent("""
