@@ -16,3 +16,13 @@ sudo systemctl stop dmx-relay.service
 sudo systemctl enable dmx-relay.service
 sudo systemctl start dmx-relay.service
 sudo systemctl daemon-reload
+
+# Deploy shutdown script
+sudo cp shutdown.py /usr/local/bin/
+sudo chmod +x /usr/local/bin/shutdown.py
+
+sudo cp scripts/shutdown-pi.sh /etc/init.d/
+sudo chmod +x /etc/init.d/listen-for-shutdown.sh
+
+sudo update-rc.d shutdown-pi.sh defaults
+sudo /etc/init.d/shutdown-pi.sh start
