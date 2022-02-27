@@ -99,7 +99,7 @@ class DmxRelay:
         GPIO.output(self._cmdPin, GPIO.HIGH)
     if (shutdown > 128):
       self.logger.info('Ask for shutdown')
-      subprocess.call(['sudo', 'shutdown', '-h', 'now'], shell=False)
+      #subprocess.call(['sudo', 'shutdown', '-h', 'now'], shell=False)
 
   def Usage(self):
     print(textwrap.dedent("""
