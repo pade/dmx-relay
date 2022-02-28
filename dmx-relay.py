@@ -65,13 +65,11 @@ class DmxRelay:
     configFile = Path.joinpath(Path.home(), self.CONFIG_FILE)
     config = configparser.ConfigParser()
     config.read_file(open(configFile, 'r'))
-    self.cmdChannel = int(config['DEFAULT']['channel'])
-    self.shutdownChannel = int(config['DEFAULT']['shutdownChannel'])
-    self._cmdPin = int(config['DEFAULT']['pin'])
-    self._shutdownPin = int(config['DEFAULT']['shutdown'])
+    self.dmxChannel = int(config['DMX']['channel'])
+    self._cmdPin = int(config['PIN']['command'])
+    self._shutdownPin = int(config['PIN']['shutdown'])
 
-    self.logger.info(f'Listning on DMX channel n°{self.cmdChannel}')
-    self.logger.info(f'Shutdown channel n°{self.shutdownChannel}')
+    self.logger.info(f'Base DMX channel: {self.dmxChannel}')
     self.logger.info(f'Actuator is plugged on pin n°{self._cmdPin}')
     self.logger.info(f'Shutdown button is plugged on pin n°{self._shutdownPin}')
 
@@ -86,20 +84,22 @@ class DmxRelay:
     wrapper.Run()
 
   def NewData(self, data):
-    command = int(data[self.cmdChannel-1])
-    shutdown = int(data[self.shutdownChannel-1])
+    command = self._dataOfChannel(self.dmxChannel, data)
+    shutdown = self._dataOfChannel(self.dmxChannel+1, data)
     if (command != self._cmdValue):
       self._cmdValue = command
-      self.logger.info(f'Channel n°{self.cmdChannel} receives value {self._cmdValue}')
       if (self._cmdValue > 128):
         self.logger.info('Open the door...')
         GPIO.output(self._cmdPin, GPIO.LOW)
       else:
-        self.logger.info('Stop action')
+        self.logger.info('Stop opening the door')
         GPIO.output(self._cmdPin, GPIO.HIGH)
     if (shutdown > 128):
       self.logger.info('Ask for shutdown')
       subprocess.call(['sudo', 'shutdown', '-h', 'now'], shell=False)
+
+  def _dataOfChannel(ch, data):
+    return int(data[ch-1])
 
   def Usage(self):
     print(textwrap.dedent("""
