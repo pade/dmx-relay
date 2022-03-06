@@ -98,7 +98,7 @@ class DmxRelay:
       self.logger.info('Ask for shutdown')
       subprocess.call(['sudo', 'shutdown', '-h', 'now'], shell=False)
 
-  def _dataOfChannel(ch, data):
+  def _dataOfChannel(self, ch, data):
     return int(data[ch-1])
 
   def Usage(self):
