@@ -22,13 +22,15 @@ import logging
 import logging.handlers
 from pathlib import Path
 import subprocess
-import RPi.GPIO as GPIO
+import smbus
 
 __author__ = 'pdassier@free.fr (Patrick Dassier)'
 
 class DmxRelay:
 
   CONFIG_FILE = '.dmx_relay.conf'
+  DEVICE_BUS = 1
+  DEVICE_ADDR = 0x10
 
   def __init__(self, argv):
     from ola.ClientWrapper import ClientWrapper
@@ -60,23 +62,17 @@ class DmxRelay:
         sys.exit()
       elif o in ("-u", "--universe"):
         universe = int(a)
-        self.logger.info(f'Using ARnet universe n°{universe}')
+        self.logger.info(f'Using ARNet universe n°{universe}')
 
+    self._bus = smbus.SMBus(self.DEVICE_BUS)
     configFile = Path.joinpath(Path.home(), self.CONFIG_FILE)
     config = configparser.ConfigParser()
     config.read_file(open(configFile, 'r'))
     self.dmxChannel = int(config['DMX']['channel'])
-    self._cmdPin = int(config['PIN']['command'])
-    self._shutdownPin = int(config['PIN']['shutdown'])
+    self._relayNb = int(config['RELAY']['number'])
 
     self.logger.info(f'Base DMX channel: {self.dmxChannel}')
-    self.logger.info(f'Actuator is plugged on pin n°{self._cmdPin}')
-    self.logger.info(f'Shutdown button is plugged on pin n°{self._shutdownPin}')
-
-
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(self._cmdPin, GPIO.OUT, initial=GPIO.HIGH)
-    GPIO.setup(self._shutdownPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    self.logger.info(f'Actuator is plugged on relay n°{self._relayNb}')
 
     wrapper = ClientWrapper()
     client = wrapper.Client()
@@ -90,10 +86,10 @@ class DmxRelay:
       self._cmdValue = command
       if (self._cmdValue > 128):
         self.logger.info('Open the door...')
-        GPIO.output(self._cmdPin, GPIO.LOW)
+        self._bus.write_byte_data(self.DEVICE_ADDR, self._relayNb, 0xFF)
       else:
         self.logger.info('Stop opening the door')
-        GPIO.output(self._cmdPin, GPIO.HIGH)
+        self._bus.write_byte_data(self.DEVICE_ADDR, self._relayNb, 0x00)
     if (shutdown > 128):
       self.logger.info('Ask for shutdown')
       subprocess.call(['sudo', 'shutdown', '-h', 'now'], shell=False)
