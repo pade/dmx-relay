@@ -69,8 +69,10 @@ class DmxRelay:
     config = configparser.ConfigParser()
     config.read_file(open(configFile, 'r'))
     self.dmxChannel = int(config['DMX']['channel'])
+    self._relayNb = int(config['RELAY']['number'])
 
     self.logger.info(f'Base DMX channel: {self.dmxChannel}')
+    self.logger.info(f'Actuator is plugged on relay n°{self._relayNb}')
 
     wrapper = ClientWrapper()
     client = wrapper.Client()
@@ -84,22 +86,14 @@ class DmxRelay:
       self._cmdValue = command
       if (self._cmdValue > 128):
         self.logger.info('Open the door...')
-        self._cmdRelay(True)
+        self._bus.write_byte_data(self.DEVICE_ADDR, self._relayNb, 0xFF)
       else:
         self.logger.info('Stop opening the door')
-        self._cmdRelay(False)
+        self._bus.write_byte_data(self.DEVICE_ADDR, self._relayNb, 0x00)
     if (shutdown > 128):
       self.logger.info('Ask for shutdown')
       subprocess.call(['sudo', 'shutdown', '-h', 'now'], shell=False)
 
-  def _cmdRelay(self, enable):
-    if (enable):
-      for i in range(1,5):
-        self._bus.write_byte_data(self.DEVICE_ADDR, i, 0xFF)
-    else:
-      for i in range(1,5):
-        self._bus.write_byte_data(self.DEVICE_ADDR, i, 0x00)
-  
   def _dataOfChannel(self, ch, data):
     return int(data[ch-1])
 
